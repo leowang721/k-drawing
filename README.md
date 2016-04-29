@@ -1,2 +1,2 @@
-# k-drawing
-k-drawing, basic lib to draw sth with canvas using es6 grammar &amp; syntax.
+# k-webgl
+学习WebGl过程的游戏之作

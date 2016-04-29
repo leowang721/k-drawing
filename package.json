@@ -10,6 +10,7 @@
     "contributors": [],
     "dependencies": {
       "k-core": "^0.0.5",
+      "etpl": "^3.1.0"
     },
     "main": "main",
     "description": "k-webgl, basic lib to draw sth with webgl using es6 grammar &amp; syntax.",
