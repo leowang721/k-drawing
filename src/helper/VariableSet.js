@@ -29,7 +29,17 @@ export default class VariableSet {
     }
 
     dump() {
-        return _.mapValues(this._data, value => [...value].map(item => this._map.get(item)));
+        return _.mapValues(this._data, value => {
+            let toReturn = {};
+            for (let name of value) {
+                let item = this._map.get(name);
+                toReturn[name] = item;
+                if (Array.isArray(toReturn[name].data)) {
+                    toReturn[name].data = new Float32Array(toReturn[name].data);
+                }
+            }
+            return toReturn;
+        });
     }
 
     dumpToCheck() {
@@ -51,6 +61,7 @@ export default class VariableSet {
         if (!newValue || !newValue.type || !this._data[newValue.type]) {
             throw new Error('invalid arguments when trying to add new value to VariableSet');
         }
+        newValue.step = newValue.step || 1;
         this._data[newValue.type].add(newValue.name);
         if (!this._map.has(newValue.name)) {
             this._map.set(newValue.name, newValue);
@@ -71,6 +82,14 @@ export default class VariableSet {
         this._data.attribute.clear();
         this._data.uniform.clear();
         this._data.varying.clear();
+    }
+
+    setData(name, values) {
+        let target = this._map.get(name);
+        if (target) {
+            target.data = values;
+            this._map.set(name, target);
+        }
     }
 
     merge(anotherVariableSet) {

@@ -4,11 +4,15 @@
  * @author Leo Wang(leowang721@gmail.com)
  */
 
+import _ from 'lodash';
 import Vec4 from './math/Vec4';
 
 export default class Coordinate extends Vec4 {
-    constructor(x, y, z = 0) {
-        super(x, y, z, 1);  // w 为1时，齐次坐标可以当做三维坐标来用
+
+    static step = 3;  // value的长度
+
+    constructor(x, y, z = 0, w = 1) {
+        super(x, y, z, w);  // w 为1时，齐次坐标可以当做三维坐标来用
     }
 
     getValue() {
@@ -17,6 +21,16 @@ export default class Coordinate extends Vec4 {
 
     clone() {
         return new Coordinate(...this._array);
+    }
+
+    equals(another) {
+        if (another instanceof Coordinate) {
+            return Vec4.equals(this, another);
+        }
+        else if (_.isArrayLike(another)) {
+            return this.getValue().join('') === another.join('');
+        }
+        return false;
     }
 
     /**

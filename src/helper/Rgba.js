@@ -10,6 +10,8 @@ import color from '../config/color';
 
 export default class Rgba extends Vec4 {
 
+    static step = 4;  // value的长度
+
     constructor(r, g, b, alpha = 1) {
         super(r, g, b, alpha);
     }

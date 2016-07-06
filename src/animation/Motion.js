@@ -2,74 +2,86 @@
  * @file 一个简单动作动画，提供的方法以设置动作为主
  * 一系列顺序执行的简单动作集，支持并发
  *
- * motion.animate(triangles)
- *     .begin()
- *     .spent(1000).moveTo([100, 200]).scale(1.5)  // 同一个Clip最多支持三种动作，且每种最多一个
+ * let motion = new Motion({
+ *     target: aCube
+ * });
+ *
+ * motion.animate(triangles)  // 同一个Clip最多支持三种动作，且每种最多一个
+ *     .begin().spent(1000).moveTo([100, 200]).scale(1.5).rotate(180, [1, 0, 0])
  *     .then().spent(2000).rotate(7200, [1, 0, 0])
  *     .then().spent(1000).moveTo([0, 0])
  *     .end();
+ * 之后就加到Animation里
+ * animation.addMotion(motion);
  *
  * @author Leo Wang(leowang721@gmail.com)
  */
 
-import {EventTarget} from 'k-core';
+import {EventTarget, util} from 'k-core';
 import Clip from './Clip';
-import RendererData from '../helper/RendererData';
-import TimeLine from './TimeLine';
 
 export default class Motion extends EventTarget {
-
-    toSet = null;
-    currentRendererData = null;
-
+    clips = [];
+    length = 0;
     constructor(options = {}) {
         super();
-        this.start = options.start;
-        this.currentSpent = options.start || 0;
-        this.timeline = options.timeline || new TimeLine();
+        this.id = options.id || ('motion-' + util.guid());
+        this.target = options.target;
     }
 
-    // 指定要执行的对象
-    animate(target) {
-        if (!(target instanceof RendererData)) {
-            target = target.getRendererData();
-        }
-        this.currentRendererData = target;
-        return this;
+    // 清空所有的 clips
+    clear() {
+        this.clips.length = 0;
+        this.length = 0;
+        this.fire('clear', {
+            motionId: this.id
+        });
     }
 
-    // 标记动作开始，会清空之前的配置的
+    // 标记动作开始，这个是持续添加clip性质的
     begin() {
-        this.toSet = null;
-        this.timeline.clear();
+        this.toSet = new Clip({
+            start: this.length,
+            target: this.target,
+            motionId: this.id
+        });
         return this;
     }
     // 动作结束
     end() {
         if (this.toSet) {
-            this.timeline.addClip(this.toSet);
-            this.currentSpent += this.toSet.length;
-            this.toSet = null;
+            this.clips.push(this.toSet);
+            this.length += this.toSet.length;
+            this.fire('add', {
+                clip: this.toSet
+            });
         }
+    }
+    // 一个新的 Clip 的开始，旧的入队列
+    then() {
+        if (this.toSet) {
+            this.clips.push(this.toSet);
+            this.length += this.toSet.length;
+            this.fire('add', {
+                clip: this.toSet
+            });
+        }
+        this.toSet = new Clip({
+            start: this.length,
+            target: this.target,
+            motionId: this.id
+        });
+        return this;
+    }
+
+    wait(ms) {
+        this.length += ms;
+        return this;
     }
 
     // 标记花多少ms
     spent(ms) {
-        this.toSet = new Clip({
-            start: this.currentSpent,
-            length: ms,
-            target: this.currentRendererData
-        });  // 调用spent即产生一个新的片段
-        return this;
-    }
-
-    // 一个新的 Clip 的开始，旧的入队列
-    then() {
-        if (this.toSet) {
-            this.timeline.addClip(this.toSet);
-            this.currentSpent += this.toSet.length;
-            this.toSet = null;
-        }
+        this.toSet.length = ms;
         return this;
     }
 
@@ -77,13 +89,22 @@ export default class Motion extends EventTarget {
         this.toSet.moveTo(pos);
         return this;
     }
-    moveBy(diff) {
-        this.toSet.moveBy(diff);
+    translate(dx, dy, dz) {
+        this.toSet.translate(dx, dy, dz);
         return this;
     }
     rotate(deg, around) {
         this.toSet.rotate(Math.PI * deg / 180.0, around);
         return this;
+    }
+    rotateX(deg) {
+        return this.rotate(deg, [1, 0, 0]);
+    }
+    rotateY(deg) {
+        return this.rotate(deg, [0, 1, 0]);
+    }
+    rotateZ(deg) {
+        return this.rotate(deg, [0, 0, 1]);
     }
     scale(ratio) {
         this.toSet.scale(ratio);

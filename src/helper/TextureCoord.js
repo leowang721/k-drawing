@@ -7,14 +7,14 @@
 import Vec2 from './math/Vec2';
 
 export default class TextureCoord extends Vec2 {
-    constructor(s, t, index = 0) {
+    constructor(s, t, unit = 0) {
         super(s, t);
         // 共有8个纹理单元，因此最好指定一下
-        this.index = index;
+        this.unit = unit;
     }
 
     getId() {
-        return [this.s, this.t, this.index].join('');
+        return [this.s, this.t, this.unit].join('');
     }
 
     getValue() {
@@ -26,7 +26,7 @@ export default class TextureCoord extends Vec2 {
     }
 
     static equals(a, b) {
-        return a._array.toString() === b._array.toString() && a.index === b.index;
+        return super.equals(a, b) && a.index === b.index;
     }
 
     static from(target) {

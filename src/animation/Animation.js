@@ -6,31 +6,39 @@
 
 import {EventTarget} from 'k-core';
 import TimeLine from './TimeLine';
-import Motion from './Motion';
 
 export default class Animation extends EventTarget {
     timeline = new TimeLine();
-
     currentSpent = 0;
+    motions = new Map();
 
     constructor() {
         super();
         this.initBehavior();
     }
 
-    initBehavior() {
-        this.timeline.on('finish', this.stop);
+    initBehavior() {}
+
+    addMotion(motion) {
+        this.motions.set(motion.id, motion);
+        // 添加 clips
+        this.timeline.addClips(motion.clips);
+        motion.on('clear', e => {
+            this.timeline.deleteClipsByMotion(e.motionId);
+        });
+        motion.on('add', e => {
+            this.timeline.addClips(e.clip);
+        });
     }
 
-    createMotion(spentToStart) {
-        let motion = new Motion({
-            start: spentToStart,
-            timeline: this.timeline
-        });
-        return motion;
+    removeMotion(motion) {
+        this.timeline.deleteClipsByMotion(motion.id);
+        this.motions.delete(motion.id);
     }
 
     play() {
+        // 重置之前的影响
+        this.timeline.reset();
         // use timeline to make the animation work
         // 并计算帧率
         let counter = 0;
@@ -40,9 +48,8 @@ export default class Animation extends EventTarget {
             let now = Date.now();
             this.currentSpent = now - this.startTime;
             if (this.currentSpent >= this.timeline.length) {
-                this.timeline.finish();
-                this.fire('finish');
                 this.stop();
+                this.fire('finish');
                 return;
             }
             if (counter === 30) {
@@ -66,8 +73,10 @@ export default class Animation extends EventTarget {
     }
 
     stop() {
+        this.timeline.finish();
         cancelAnimationFrame(this.tickId);
         this.currentSpent = 0;
+        this.fire('frame');
     }
 
     replay() {

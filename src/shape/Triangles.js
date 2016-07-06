@@ -1,77 +1,54 @@
 /**
- * @file 形状：三角形，一共有三种类型，根据 option 的 mode 来对应
+ * @file 形状：三角形，一共有三种类型，根据 triangle 的 mode 来对应
+ *
  * 先假设有坐标位置 a, b, c, d 四个
  * TRIANGLES 默认，一系列单独的三角形，三角形为：(a,b, c) d被省略
- * TRIANGLES_STRIP  一系列模进使用顶点的三角形，三角形为：(a,b,c)、(b,c,d)
- * TRIANGLES_LOOP 一系列三角形，第一个点均为整体的第一个点，剩余模进，三角形为：(a,b,c)、(a,c,d)
+ * TRIANGLE_STRIP  一系列模进使用顶点的三角形，三角形为：(a,b,c)、(b,c,d)
+ * TRIANGLE_FAN 一系列三角形，第一个点均为整体的第一个点，剩余模进，三角形为：(a,b,c)、(a,c,d)
  *
  * @author Leo Wang(leowang721@gmail.com)
  */
 
-import Shape from './Shape';
-import Vertex from '../element/Vertex';
+import Base from './Base';
+import ElementTriangles from '../element/Triangles';
 
-export default class Triangles extends Shape {
+export default class Triangles extends Base {
 
-    type = 'TRIANGLES';
-
-    static MODE = {
-        STRIP: 'TRIANGLE_STRIP',
-        FAN: 'TRIANGLE_FAN',
-        DEFAULT: 'TRIANGLES'
-    };
+    type = 'triangles';
 
     constructor(options = {}) {
         super(options);
     }
 
     initOptions() {
-        this.mode = this.options.mode || Triangles.MODE.DEFAULT;
-        this.triangles = [].concat(this.options.triangles || []);
+        // 材质库中包含
+        // 材质的漫射(diffuse)，环境(ambient)，光泽(specular)的RGB(红绿蓝)的定义值
+        // 以及反射(specularity)，折射(refraction)，透明度(transparency)等其它特征
+        // 包括纹理文件……
+        // 更具体的参看 Material
+        this.material = this.options.material || {};
+        // 纹理
+        this.textures = this.options.textures;
     }
 
     initElements() {
-        if (this.triangles.length > 0) {
-            this.addTriangles(this.triangles);
-        }
+        this.triangles = new ElementTriangles({
+            color: this.color,
+            vertices: this.options.vertices,
+            mode: this.options.mode
+        });
+        this.addElements(this.triangles);
+        // 清理此API
+        this.addElements = () => {};
     }
 
-    addTriangles(triangles = []) {
-
-        triangles = [].concat(triangles);
-
-        if (!this.position && triangles.length > 0) {
-            this.position = triangles[0].a;
-        }
-
-        triangles.forEach(triangle => {
-            switch (this.mode) {
-                case Triangles.MODE.STRIP:
-                case Triangles.MODE.LOOP:
-                    // 这两种模式，只要加点就行了
-                    let endPoint = Vertex.from({
-                        coord: triangle.c,
-                        color: triangle.color || this.color
-                    });
-                    this.addVertices(endPoint);
-                    break;
-                default:
-                    let aPoint = Vertex.from({
-                        coord: triangle.a,
-                        color: triangle.color || this.color
-                    });
-                    let bPoint = Vertex.from({
-                        coord: triangle.b,
-                        color: triangle.color || this.color
-                    });
-                    let cPoint = Vertex.from({
-                        coord: triangle.c,
-                        color: triangle.color || this.color
-                    });
-                    this.addVertices([aPoint, bPoint, cPoint]);
-                    break;
-            }
-        });
-        this.calculatePosition();
+    /**
+     * 添加点
+     *
+     * @param {Array.<Vertex> | Array.<Array.<number>> | Vertex | Array.<number>} vertices 点信息
+     */
+    addVertices(vertices = []) {
+        this.triangles.addVertices(vertices);
+        this.fire('change');
     }
 }

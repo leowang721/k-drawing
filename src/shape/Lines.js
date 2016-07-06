@@ -1,68 +1,44 @@
 /**
- * @file 形状：线，一共有三种类型，根据 option 的 mode 来对应
+ * @file 形状：线，一共有三种类型，根据 line 的 mode 来对应
  * 先假设有坐标位置 a, b, c, d 四个
  * LINES 默认，一系列单独的线段，线段为：(a,b)、(c,d)
  * LINES_STRIP  一系列连接的线段，线段为：(a,b)、(b,c)、(c,d)
  * LINES_LOOP 一系列连接并形成回路的线段，线段为：(a,b)、(b,c)、(c,d)、(d,a)
  *
+ * 因为本身渲染模式就支持，所以这里特殊支持一下，跟 Triangles 一样
+ *
  * @author Leo Wang(leowang721@gmail.com)
  */
 
-import Shape from './Shape';
-import Vertex from '../element/Vertex';
+import Base from './Base';
+import LinesElement from '../element/Lines';
 
-export default class Lines extends Shape {
+export default class Lines extends Base {
 
-    type = 'LINES';
-
-    static MODE = {
-        STRIP: 'LINE_STRIP',
-        LOOP: 'LINE_LOOP',
-        DEFAULT: 'LINES'
-    };
+    type = 'lines';
 
     constructor(options = {}) {
         super(options);
     }
 
-    initOptions() {
-        this.mode = this.options.mode || Lines.MODE.DEFAULT;
-        this.lines = [].concat(this.options.lines || []);
-    }
-
     initElements() {
-        if (this.lines.length > 0) {
-            this.addLines(this.lines);
-        }
+        this.lines = new LinesElement({
+            color: this.color,
+            vertices: this.options.vertices,
+            mode: this.options.mode
+        });
+        this.addElements(this.lines);
+        // 清理此API
+        this.addElements = () => {};
     }
 
-    addLines(lines = []) {
-
-        [].concat(lines).forEach(line => {
-            switch (this.mode) {
-                case Lines.MODE.STRIP:
-                case Lines.MODE.LOOP:
-                    // 这两种模式，只要加点就行了
-                    let endPoint = Vertex.from({
-                        coord: line.to,
-                        color: line.color || this.color
-                    });
-                    this.addVertices(endPoint);
-                    break;
-                default:
-                    let fromPoint = Vertex.from({
-                        coord: line.from,
-                        color: line.color || this.color
-                    });
-                    let toPoint = Vertex.from({
-                        coord: line.to,
-                        color: line.color || this.color
-                    });
-                    this.addVertices([fromPoint, toPoint]);
-                    break;
-            }
-        });
-
-        this.calculatePosition();
+    /**
+     * 添加点
+     *
+     * @param {Array.<Vertex> | Array.<Array.<number>> | Vertex | Array.<number>} vertices 点信息
+     */
+    addVertices(vertices = []) {
+        this.lines.addVertices(vertices);
+        this.fire('change');
     }
 }

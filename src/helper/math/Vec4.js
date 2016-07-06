@@ -8,12 +8,14 @@ import {vec4} from '../../dep/gl-matrix-min';
 
 export default class Vec4 {
 
+    step = 4;
+
     static equals(a, b) {
         return a._array.toString() === b._array.toString();
     }
 
-    constructor(x = 0, y = 0, z = 0, w = 0) {
-        this._array = vec4.fromValues(x, y, z, w);
+    constructor(x, y, z = 0, w = 1) {
+        this.setValue([x, y, z, w]);
     }
 
     get x() {
@@ -46,7 +48,7 @@ export default class Vec4 {
     }
 
     setValue(arr) {
-        this._array = vec4.fromValues(arr);
+        this._array = vec4.fromValues(...arr);
     }
 
     getValue() {

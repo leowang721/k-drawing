@@ -9,8 +9,8 @@ let library = {};
 
 function load(name) {
     return Promise.require([
-        `etpl/tpl!k-webgl/shader/${name}.vert.tpl`,
-        `etpl/tpl!k-webgl/shader/${name}.frag.tpl`
+        `etpl/tpl!k-webgl/shader/tpl/${name}.vert.tpl`,
+        `etpl/tpl!k-webgl/shader/tpl/${name}.frag.tpl`
     ]);
 }
 

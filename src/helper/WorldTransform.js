@@ -7,7 +7,7 @@
 import {EventTarget} from 'k-core';
 import {mat4} from '../dep/gl-matrix-min';
 
-export default class Transform extends EventTarget {
+export default class WorldTransform extends EventTarget {
     matrix = mat4.identity(mat4.create());
     worldTransform = {
         length: 0,
@@ -115,15 +115,6 @@ export default class Transform extends EventTarget {
         this.worldTransform.length++;
         // mat4.scale(this.matrix, this.matrix, v);
         return this;
-    }
-
-    clear() {
-        this.worldTransform = {
-            length: 0,
-            translate: [],
-            rotate: [],
-            scale: []
-        };
     }
 
     setModelTransform(clipId, args) {
